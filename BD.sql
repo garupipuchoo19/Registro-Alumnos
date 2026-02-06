@@ -1,57 +1,68 @@
--- Crear base de datos
-CREATE DATABASE sistema_alumnos;
+CREATE DATABASE IF NOT EXISTS escuela;
+USE escuela;
 
-USE sistema_alumnos;
-
--- Tabla de carreras (catálogo)
+-- Tabla de carreras
 CREATE TABLE carreras (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id_carrera INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    clave VARCHAR(10) NOT NULL UNIQUE,
+    activa BOOLEAN DEFAULT TRUE
+);
+
+-- Tabla de turnos
+CREATE TABLE turnos (
+    id_turno INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    abreviatura VARCHAR(5) NOT NULL,
     activo BOOLEAN DEFAULT TRUE
 );
 
--- Tabla de grados (catálogo)
+-- Tabla de grados
 CREATE TABLE grados (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(50) NOT NULL,
-    nivel INT(20) NOT NULL,
+    id_grado INT AUTO_INCREMENT PRIMARY KEY,
+    grado INT NOT NULL,
     activo BOOLEAN DEFAULT TRUE
 );
 
 -- Tabla de grupos
 CREATE TABLE grupos (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    carrera_id INT NOT NULL,
-    grado_id INT NOT NULL,
-    turno VARCHAR(20) NOT NULL,
-    clave VARCHAR(20) UNIQUE NOT NULL,
-    FOREIGN KEY (carrera_id) REFERENCES carreras(id),
-    FOREIGN KEY (grado_id) REFERENCES grados(id)
+    id_grupo INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(50) UNIQUE NOT NULL,
+    id_carrera INT NOT NULL,
+    id_grado INT NOT NULL,
+    id_turno INT NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_carrera) REFERENCES carreras(id_carrera),
+    FOREIGN KEY (id_grado) REFERENCES grados(id_grado),
+    FOREIGN KEY (id_turno) REFERENCES turnos(id_turno)
 );
 
 -- Tabla de alumnos
 CREATE TABLE alumnos (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    matricula VARCHAR(20) UNIQUE NOT NULL,
+    id_alumno INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     apellido_paterno VARCHAR(50) NOT NULL,
-    apellido_materno VARCHAR(50) NOT NULL,
-    grupo_id INT NOT NULL,
-    email VARCHAR(100),
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    apellido_materno VARCHAR(50),
+    id_grupo INT NOT NULL,
     activo BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+    FOREIGN KEY (id_grupo) REFERENCES grupos(id_grupo)
 );
 
--- Insertar datos iniciales para catálogos
-INSERT INTO carreras (nombre, clave) VALUES 
-('Sistemas', 'ISC'),
-('Biología', 'BIO'),
-('Administración', 'ADM');
+-- Insertar datos iniciales
+INSERT INTO carreras (nombre) VALUES 
+('Sistemas'), ('Psicología'), ('Administración'), ('Contabilidad'),
+('Derecho'), ('Medicina'), ('Arquitectura'), ('Ingeniería Civil'),
+('Ingeniería Industrial'), ('Mercadotecnia'), ('Diseño Gráfico'),
+('Enfermería'), ('Nutrición'), ('Odontología'), ('Pedagogía'),
+('Turismo'), ('Gastronomía'), ('Comunicación'), ('Biología'),
+('Química');
 
-INSERT INTO grados (nombre, nivel) VALUES 
-('Primero', 'Grado'),
-('Segundo', 'Grado'),
-('Tercero', 'Grado'),
-('Cuarto', 'Grado');
+INSERT INTO turnos (nombre, abreviatura) VALUES 
+('Matutino', 'M'),
+('Vespertino', 'V'),
+('Mixto', 'X');
+
+INSERT INTO grados (grado) VALUES 
+(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11);
+select * from  carreras;
+select * from  grupos;
+select * from alumnos;
