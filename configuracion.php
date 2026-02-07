@@ -2,427 +2,195 @@
 session_start();
 require_once 'conexion.php';
 
-// Procesar acciones para carreras
+/* ===== CARRERAS ===== */
 if (isset($_POST['agregar_carrera'])) {
     $nombre = $conexion->real_escape_string($_POST['nombre_carrera']);
-    $query = "INSERT INTO carreras (nombre) VALUES ('$nombre')";
-    $conexion->query($query);
+    $conexion->query("INSERT INTO carreras (nombre) VALUES ('$nombre')");
 }
-
 if (isset($_GET['eliminar_carrera'])) {
-    $id = $_GET['eliminar_carrera'];
-    $query = "UPDATE carreras SET activa = 0 WHERE id_carrera = $id";
-    $conexion->query($query);
+    $conexion->query("UPDATE carreras SET activa=0 WHERE id_carrera=".$_GET['eliminar_carrera']);
 }
-
 if (isset($_GET['activar_carrera'])) {
-    $id = $_GET['activar_carrera'];
-    $query = "UPDATE carreras SET activa = 1 WHERE id_carrera = $id";
-    $conexion->query($query);
+    $conexion->query("UPDATE carreras SET activa=1 WHERE id_carrera=".$_GET['activar_carrera']);
 }
 
-// Obtener carreras
-$query_carreras = "SELECT * FROM carreras ORDER BY activa DESC, nombre";
-$result_carreras = $conexion->query($query_carreras);
-
-// Obtener turnos
-$query_turnos = "SELECT * FROM turnos ORDER BY activo DESC, nombre";
-$result_turnos = $conexion->query($query_turnos);
-
-// Obtener grados
-$query_grados = "SELECT * FROM grados ORDER BY activo DESC, grado";
-$result_grados = $conexion->query($query_grados);
+$carreras = $conexion->query("SELECT * FROM carreras ORDER BY activa DESC, nombre");
+$turnos   = $conexion->query("SELECT * FROM turnos ORDER BY activo DESC, nombre");
+$grados   = $conexion->query("SELECT * FROM grados ORDER BY activo DESC, grado");
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuración</title>
-    <style>
-        /* Estilos del index (reutilizados) */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<title>Configuración</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-        body {
-            background-color: #f5f5f5;
-            color: #333;
-        }
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
+body{background:#f1f8f4;color:#2f4f3f}
 
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
+/* ===== TOPBAR ===== */
+.topbar{
+    background:linear-gradient(90deg,#1e8449,#27ae60);
+    color:#fff;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.15)
+}
+.logo{font-size:22px;font-weight:bold}
+.menu{display:flex;gap:20px}
+.menu a{
+    color:#fff;
+    text-decoration:none;
+    padding:8px 12px;
+    border-radius:6px
+}
+.menu a.active,
+.menu a:hover{background:rgba(255,255,255,.2)}
 
-        .sidebar {
-            width: 250px;
-            background: linear-gradient(180deg, #2c3e50, #34495e);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        }
+/* ===== CONTENIDO ===== */
+.main-content{padding:30px}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:25px
+}
+.card{
+    background:#fff;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 2px 4px rgba(0,0,0,.1)
+}
+.card h3{
+    color:#1e8449;
+    margin-bottom:15px
+}
 
-        .logo {
-            text-align: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+/* ===== FORM ===== */
+.form-group{margin-bottom:15px}
+label{font-weight:600;display:block;margin-bottom:6px}
+input{
+    width:100%;
+    padding:10px;
+    border:2px solid #cdeee0;
+    border-radius:6px
+}
+input:focus{outline:none;border-color:#27ae60}
+.btn{
+    background:#27ae60;
+    color:#fff;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer
+}
+.btn:hover{background:#1e8449}
 
-        .logo h1 {
-            font-size: 24px;
-            color: #3498db;
-        }
-
-        .nav-menu {
-            margin-top: 30px;
-        }
-
-        .nav-item {
-            list-style: none;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 15px 25px;
-            color: #ecf0f1;
-            text-decoration: none;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-        }
-
-        .nav-link:hover {
-            background: rgba(52, 152, 219, 0.1);
-            border-left: 4px solid #3498db;
-            color: #3498db;
-        }
-
-        .nav-link.active {
-            background: rgba(52, 152, 219, 0.2);
-            border-left: 4px solid #3498db;
-            color: #3498db;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 20px;
-        }
-
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        /* Estilos específicos para configuración */
-        .config-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .config-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .section-title {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .btn-small {
-            background: #3498db;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-small:hover {
-            background: #2980b9;
-        }
-
-        .config-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .config-table th {
-            background: #2c3e50;
-            color: white;
-            padding: 10px;
-            text-align: left;
-        }
-
-        .config-table td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .config-table tr:hover {
-            background: #f9f9f9;
-        }
-
-        .btn-icon {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .activo {
-            color: #27ae60;
-            font-weight: bold;
-        }
-
-        .inactivo {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-            }
-            
-            .nav-menu {
-                display: flex;
-                overflow-x: auto;
-            }
-            
-            .nav-item {
-                white-space: nowrap;
-            }
-            
-            .config-container {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+/* ===== TABLE ===== */
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th{
+    background:#27ae60;
+    color:#fff;
+    padding:10px;
+    text-align:left
+}
+td{
+    padding:10px;
+    border-bottom:1px solid #eee
+}
+.activo{color:#27ae60;font-weight:bold}
+.inactivo{color:#e74c3c;font-weight:bold}
+.icon-btn{
+    padding:6px 10px;
+    border-radius:5px;
+    color:#fff;
+    text-decoration:none
+}
+.icon-danger{background:#e74c3c}
+.icon-success{background:#27ae60}
+.icon-btn:hover{opacity:.85}
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Sidebar (igual que index.php) -->
-        <aside class="sidebar">
-            <div class="logo">
-                <h1><i class="fas fa-school"></i> Sistema Escolar</h1>
-            </div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="index.php" class="nav-link">
-                        <i class="fas fa-home"></i> Inicio
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="registro_alumnos.php" class="nav-link">
-                        <i class="fas fa-user-plus"></i> Registro de Alumnos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="registro_grupos.php" class="nav-link">
-                        <i class="fas fa-users"></i> Registro de Grupos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="alumnos_registrados.php" class="nav-link">
-                        <i class="fas fa-list"></i> Alumnos Registrados
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="configuracion.php" class="nav-link active">
-                        <i class="fas fa-cog"></i> Configuración
-                    </a>
-                </li>
-            </ul>
-        </aside>
 
-        <!-- Contenido principal -->
-        <main class="main-content">
-            <div class="header">
-                <h2><i class="fas fa-cog"></i> Configuración del Sistema</h2>
-            </div>
-
-            <div class="config-container">
-                <!-- Sección de Carreras -->
-                <div class="config-section">
-                    <h3 class="section-title">Carreras</h3>
-                    
-                    <form method="POST" action="">
-                        <div class="form-group">
-                            <label class="form-label">Agregar Nueva Carrera:</label>
-                            <input type="text" name="nombre_carrera" class="form-input" 
-                                   placeholder="Nombre de la carrera" required>
-                        </div>
-                        <button type="submit" name="agregar_carrera" class="btn-small">
-                            <i class="fas fa-plus"></i> Agregar Carrera
-                        </button>
-                    </form>
-                    
-                    <table class="config-table">
-                        <thead>
-                            <tr>
-                                <th>Carrera</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($carrera = $result_carreras->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?php echo $carrera['nombre']; ?></td>
-                                    <td>
-                                        <?php if ($carrera['activa']): ?>
-                                            <span class="activo">Activa</span>
-                                        <?php else: ?>
-                                            <span class="inactivo">Inactiva</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if ($carrera['activa']): ?>
-                                            <a href="?eliminar_carrera=<?php echo $carrera['id_carrera']; ?>" 
-                                               class="btn-icon btn-danger"
-                                               onclick="return confirm('¿Desactivar esta carrera?')">
-                                                <i class="fas fa-times"></i>
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="?activar_carrera=<?php echo $carrera['id_carrera']; ?>" 
-                                               class="btn-icon btn-success">
-                                                <i class="fas fa-check"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Sección de Turnos -->
-                <div class="config-section">
-                    <h3 class="section-title">Turnos</h3>
-                    
-                    <table class="config-table">
-                        <thead>
-                            <tr>
-                                <th>Turno</th>
-                                <th>Abreviatura</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($turno = $result_turnos->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?php echo $turno['nombre']; ?></td>
-                                    <td><?php echo $turno['abreviatura']; ?></td>
-                                    <td>
-                                        <?php if ($turno['activo']): ?>
-                                            <span class="activo">Activo</span>
-                                        <?php else: ?>
-                                            <span class="inactivo">Inactivo</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Sección de Grados -->
-                <div class="config-section">
-                    <h3 class="section-title">Grados</h3>
-                    
-                    <table class="config-table">
-                        <thead>
-                            <tr>
-                                <th>Grado</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($grado = $result_grados->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?php echo $grado['grado']; ?>°</td>
-                                    <td>
-                                        <?php if ($grado['activo']): ?>
-                                            <span class="activo">Activo</span>
-                                        <?php else: ?>
-                                            <span class="inactivo">Inactivo</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
+<!-- TOPBAR -->
+<nav class="topbar">
+    <div class="logo"><i class="fas fa-school"></i> Sistema Escolar</div>
+    <div class="menu">
+        <a href="index.php"><i class="fas fa-home"></i> Inicio</a>
+        <a href="registro_alumnos.php"><i class="fas fa-user-plus"></i> Alumnos</a>
+        <a href="registro_grupos.php"><i class="fas fa-users"></i> Grupos</a>
+        <a href="alumnos_registrados.php"><i class="fas fa-list"></i> Listado</a>
+        <a href="configuracion.php" class="active"><i class="fas fa-cog"></i> Configuración</a>
     </div>
+</nav>
 
-    <script>
-        // Resaltar enlace activo
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPage = window.location.pathname.split('/').pop();
-            const navLinks = document.querySelectorAll('.nav-link');
-            
-            navLinks.forEach(link => {
-                const linkPage = link.getAttribute('href');
-                if (linkPage === currentPage) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-        });
-    </script>
+<!-- CONTENIDO -->
+<main class="main-content">
+
+<div class="grid">
+
+<!-- CARRERAS -->
+<div class="card">
+    <h3><i class="fas fa-graduation-cap"></i> Carreras</h3>
+    <form method="POST">
+        <div class="form-group">
+            <label>Nueva carrera</label>
+            <input type="text" name="nombre_carrera" required>
+        </div>
+        <button class="btn"><i class="fas fa-plus"></i> Agregar</button>
+    </form>
+
+    <table>
+        <?php while($c=$carreras->fetch_assoc()): ?>
+        <tr>
+            <td><?= $c['nombre'] ?></td>
+            <td><?= $c['activa']?'<span class="activo">Activa</span>':'<span class="inactivo">Inactiva</span>' ?></td>
+            <td>
+                <?php if($c['activa']): ?>
+                    <a class="icon-btn icon-danger" href="?eliminar_carrera=<?= $c['id_carrera'] ?>"><i class="fas fa-times"></i></a>
+                <?php else: ?>
+                    <a class="icon-btn icon-success" href="?activar_carrera=<?= $c['id_carrera'] ?>"><i class="fas fa-check"></i></a>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
+</div>
+
+<!-- TURNOS -->
+<div class="card">
+    <h3><i class="fas fa-clock"></i> Turnos</h3>
+    <table>
+        <?php while($t=$turnos->fetch_assoc()): ?>
+        <tr>
+            <td><?= $t['nombre'] ?></td>
+            <td><?= $t['abreviatura'] ?></td>
+            <td><?= $t['activo']?'<span class="activo">Activo</span>':'<span class="inactivo">Inactivo</span>' ?></td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
+</div>
+
+<!-- GRADOS -->
+<div class="card">
+    <h3><i class="fas fa-layer-group"></i> Grados</h3>
+    <table>
+        <?php while($g=$grados->fetch_assoc()): ?>
+        <tr>
+            <td><?= $g['grado'] ?>°</td>
+            <td><?= $g['activo']?'<span class="activo">Activo</span>':'<span class="inactivo">Inactivo</span>' ?></td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
+</div>
+
+</div>
+</main>
+
 </body>
 </html>

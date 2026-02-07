@@ -5,24 +5,19 @@ require_once 'conexion.php';
 // Procesar acciones CRUD
 if (isset($_GET['accion'])) {
     $id = $_GET['id'];
-    
-    switch ($_GET['accion']) {
-        case 'eliminar':
-            $query = "UPDATE alumnos SET activo = 0 WHERE id_alumno = $id";
-            $conexion->query($query);
-            break;
-            
-        case 'activar':
-            $query = "UPDATE alumnos SET activo = 1 WHERE id_alumno = $id";
-            $conexion->query($query);
-            break;
+
+    if ($_GET['accion'] === 'eliminar') {
+        $conexion->query("UPDATE alumnos SET activo = 0 WHERE id_alumno = $id");
+    }
+
+    if ($_GET['accion'] === 'activar') {
+        $conexion->query("UPDATE alumnos SET activo = 1 WHERE id_alumno = $id");
     }
 }
 
 // Obtener alumnos
-$query = "SELECT a.*, g.clave as grupo_clave, 
-          CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', 
-          IFNULL(a.apellido_materno, '')) as nombre_completo
+$query = "SELECT a.*, g.clave AS grupo_clave,
+          CONCAT(a.nombre,' ',a.apellido_paterno,' ',IFNULL(a.apellido_materno,'')) AS nombre_completo
           FROM alumnos a
           JOIN grupos g ON a.id_grupo = g.id_grupo
           ORDER BY a.id_alumno DESC";
@@ -31,319 +26,202 @@ $result = $conexion->query($query);
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alumnos Registrados</title>
-    <style>
-        /* Estilos del index (reutilizados) */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<title>Alumnos Registrados</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        body {
-            background-color: #f5f5f5;
-            color: #333;
-        }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Tahoma,sans-serif;
+}
 
-        .sidebar {
-            width: 250px;
-            background: linear-gradient(180deg, #2c3e50, #34495e);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        }
+body{
+    background:#f1f8f4;
+    color:#2f4f3f;
+}
 
-        .logo {
-            text-align: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+/* ===== TOPBAR ===== */
+.topbar{
+    background:linear-gradient(90deg,#1e8449,#27ae60);
+    color:white;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
 
-        .logo h1 {
-            font-size: 24px;
-            color: #3498db;
-        }
+.topbar .logo{
+    font-size:22px;
+    font-weight:bold;
+}
 
-        .nav-menu {
-            margin-top: 30px;
-        }
+.menu{
+    display:flex;
+    gap:20px;
+}
 
-        .nav-item {
-            list-style: none;
-        }
+.menu a{
+    color:white;
+    text-decoration:none;
+    padding:8px 12px;
+    border-radius:6px;
+}
 
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 15px 25px;
-            color: #ecf0f1;
-            text-decoration: none;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-        }
+.menu a.active,
+.menu a:hover{
+    background:rgba(255,255,255,.2);
+}
 
-        .nav-link:hover {
-            background: rgba(52, 152, 219, 0.1);
-            border-left: 4px solid #3498db;
-            color: #3498db;
-        }
+/* ===== CONTENIDO ===== */
+.main-content{
+    padding:30px;
+}
 
-        .nav-link.active {
-            background: rgba(52, 152, 219, 0.2);
-            border-left: 4px solid #3498db;
-            color: #3498db;
-        }
+.card{
+    background:white;
+    border-radius:10px;
+    padding:30px;
+    box-shadow:0 2px 4px rgba(0,0,0,.1);
+}
 
-        .main-content {
-            flex: 1;
-            padding: 20px;
-        }
+.card h3{
+    margin-bottom:20px;
+    color:#1e8449;
+}
 
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
+table{
+    width:100%;
+    border-collapse:collapse;
+}
 
-        /* Estilos específicos para la tabla */
-        .table-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
+th{
+    background:#27ae60;
+    color:white;
+    padding:12px;
+}
 
-        .table-title {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
-        }
+td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+tr.activo{
+    background:#ecf9f1;
+}
 
-        th {
-            background: #3498db;
-            color: white;
-            padding: 15px;
-            text-align: left;
-        }
+tr.inactivo{
+    background:#f8d7da;
+}
 
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
+.status-active{
+    color:#1e8449;
+    font-weight:bold;
+}
 
-        tr:hover {
-            background: #f9f9f9;
-        }
+.status-inactive{
+    color:#c0392b;
+    font-weight:bold;
+}
 
-        .activo {
-            background: #d4edda !important;
-        }
+.btn{
+    padding:6px 10px;
+    border-radius:5px;
+    text-decoration:none;
+    color:white;
+    font-size:14px;
+}
 
-        .inactivo {
-            background: #f8d7da !important;
-            color: #721c24;
-        }
-
-        .btn-action {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 5px;
-            transition: opacity 0.3s;
-        }
-
-        .btn-action:hover {
-            opacity: 0.8;
-        }
-
-        .btn-edit {
-            background: #f39c12;
-            color: white;
-        }
-
-        .btn-delete {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-activate {
-            background: #27ae60;
-            color: white;
-        }
-
-        .status-active {
-            color: #27ae60;
-            font-weight: bold;
-        }
-
-        .status-inactive {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-            }
-            
-            .nav-menu {
-                display: flex;
-                overflow-x: auto;
-            }
-            
-            .nav-item {
-                white-space: nowrap;
-            }
-            
-            table {
-                font-size: 14px;
-            }
-            
-            .btn-action {
-                padding: 4px 8px;
-                font-size: 12px;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+.btn-edit{ background:#f39c12; }
+.btn-delete{ background:#e74c3c; }
+.btn-activate{ background:#27ae60; }
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Sidebar (igual que index.php) -->
-        <aside class="sidebar">
-            <div class="logo">
-                <h1><i class="fas fa-school"></i> Sistema Escolar</h1>
-            </div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="index.php" class="nav-link">
-                        <i class="fas fa-home"></i> Inicio
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="registro_alumnos.php" class="nav-link">
-                        <i class="fas fa-user-plus"></i> Registro de Alumnos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="registro_grupos.php" class="nav-link">
-                        <i class="fas fa-users"></i> Registro de Grupos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="alumnos_registrados.php" class="nav-link active">
-                        <i class="fas fa-list"></i> Alumnos Registrados
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="configuracion.php" class="nav-link">
-                        <i class="fas fa-cog"></i> Configuración
-                    </a>
-                </li>
-            </ul>
-        </aside>
 
-        <!-- Contenido principal -->
-        <main class="main-content">
-            <div class="header">
-                <h2><i class="fas fa-list"></i> Alumnos Registrados</h2>
-            </div>
-
-            <div class="table-container">
-                <h3 class="table-title">Lista de Alumnos</h3>
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Alumno</th>
-                            <th>Grupo</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($alumno = $result->fetch_assoc()): ?>
-                            <tr class="<?php echo $alumno['activo'] ? 'activo' : 'inactivo'; ?>">
-                                <td><?php echo $alumno['id_alumno']; ?></td>
-                                <td><?php echo $alumno['nombre_completo']; ?></td>
-                                <td><?php echo $alumno['grupo_clave']; ?></td>
-                                <td>
-                                    <?php if ($alumno['activo']): ?>
-                                        <span class="status-active">
-                                            <i class="fas fa-check-circle"></i> Activo
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="status-inactive">
-                                            <i class="fas fa-times-circle"></i> Inactivo
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <a href="editar_alumno.php?id=<?php echo $alumno['id_alumno']; ?>" 
-                                       class="btn-action btn-edit">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </a>
-                                    
-                                    <?php if ($alumno['activo']): ?>
-                                        <a href="?accion=eliminar&id=<?php echo $alumno['id_alumno']; ?>" 
-                                           class="btn-action btn-delete"
-                                           onclick="return confirm('¿Está seguro de eliminar este alumno?')">
-                                            <i class="fas fa-trash"></i> Eliminar
-                                        </a>
-                                    <?php else: ?>
-                                        <a href="?accion=activar&id=<?php echo $alumno['id_alumno']; ?>" 
-                                           class="btn-action btn-activate">
-                                            <i class="fas fa-check"></i> Activar
-                                        </a>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            </div>
-        </main>
+<!-- ===== TOPBAR ===== -->
+<nav class="topbar">
+    <div class="logo">
+        <i class="fas fa-school"></i> Sistema Escolar
     </div>
 
-    <script>
-        // Resaltar enlace activo
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPage = window.location.pathname.split('/').pop();
-            const navLinks = document.querySelectorAll('.nav-link');
-            
-            navLinks.forEach(link => {
-                const linkPage = link.getAttribute('href');
-                if (linkPage === currentPage) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-        });
-    </script>
+    <div class="menu">
+        <a href="index.php"><i class="fas fa-home"></i> Inicio</a>
+        <a href="registro_alumnos.php"><i class="fas fa-user-plus"></i> Alumnos</a>
+        <a href="registro_grupos.php"><i class="fas fa-users"></i> Grupos</a>
+        <a href="alumnos_registrados.php" class="active"><i class="fas fa-list"></i> Listado</a>
+        <a href="configuracion.php"><i class="fas fa-cog"></i> Configuración</a>
+    </div>
+</nav>
+
+<!-- ===== CONTENIDO ===== -->
+<main class="main-content">
+
+<div class="card">
+    <h3><i class="fas fa-list"></i> Alumnos Registrados</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Alumno</th>
+                <th>Grupo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php while($a = $result->fetch_assoc()): ?>
+            <tr class="<?= $a['activo'] ? 'activo' : 'inactivo' ?>">
+                <td><?= $a['id_alumno'] ?></td>
+                <td><?= $a['nombre_completo'] ?></td>
+                <td><?= $a['grupo_clave'] ?></td>
+                <td>
+                    <?= $a['activo']
+                        ? '<span class="status-active"><i class="fas fa-check-circle"></i> Activo</span>'
+                        : '<span class="status-inactive"><i class="fas fa-times-circle"></i> Inactivo</span>' ?>
+                </td>
+                <td>
+                    <a href="editar_alumno.php?id=<?= $a['id_alumno'] ?>" class="btn btn-edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+
+                    <?php if($a['activo']): ?>
+                        <a href="?accion=eliminar&id=<?= $a['id_alumno'] ?>" 
+                           class="btn btn-delete"
+                           onclick="return confirm('¿Desactivar alumno?')">
+                           <i class="fas fa-trash"></i>
+                        </a>
+                    <?php else: ?>
+                        <a href="?accion=activar&id=<?= $a['id_alumno'] ?>" 
+                           class="btn btn-activate">
+                           <i class="fas fa-check"></i>
+                        </a>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+        </tbody>
+    </table>
+
+</div>
+
+</main>
+
+<script>
+const current = location.pathname.split('/').pop();
+document.querySelectorAll('.menu a').forEach(link=>{
+    if(link.getAttribute('href')===current){
+        link.classList.add('active');
+    }
+});
+</script>
+
 </body>
 </html>
