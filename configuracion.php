@@ -13,6 +13,22 @@ if (isset($_GET['eliminar_carrera'])) {
 if (isset($_GET['activar_carrera'])) {
     $conexion->query("UPDATE carreras SET activa=1 WHERE id_carrera=".$_GET['activar_carrera']);
 }
+/* ===== TURNOS ===== */
+if (isset($_GET['desactivar_turno'])) {
+    $conexion->query("UPDATE turnos SET activo=0 WHERE id_turno=".$_GET['desactivar_turno']);
+}
+if (isset($_GET['activar_turno'])) {
+    $conexion->query("UPDATE turnos SET activo=1 WHERE id_turno=".$_GET['activar_turno']);
+}
+
+/* ===== GRADOS ===== */
+if (isset($_GET['desactivar_grado'])) {
+    $conexion->query("UPDATE grados SET activo=0 WHERE id_grado=".$_GET['desactivar_grado']);
+}
+if (isset($_GET['activar_grado'])) {
+    $conexion->query("UPDATE grados SET activo=1 WHERE id_grado=".$_GET['activar_grado']);
+}
+
 
 $carreras = $conexion->query("SELECT * FROM carreras ORDER BY activa DESC, nombre");
 $turnos   = $conexion->query("SELECT * FROM turnos ORDER BY activo DESC, nombre");
@@ -170,7 +186,18 @@ td{
         <tr>
             <td><?= $t['nombre'] ?></td>
             <td><?= $t['abreviatura'] ?></td>
-            <td><?= $t['activo']?'<span class="activo">Activo</span>':'<span class="inactivo">Inactivo</span>' ?></td>
+            <td><?= $t['activo'] ? '<span class="activo">Activo</span>' : '<span class="inactivo">Inactivo</span>' ?></td>
+            <td>
+                <?php if($t['activo']): ?>
+                    <a class="icon-btn icon-danger" href="?desactivar_turno=<?= $t['id_turno'] ?>">
+                        <i class="fas fa-times"></i>
+                    </a>
+                <?php else: ?>
+                    <a class="icon-btn icon-success" href="?activar_turno=<?= $t['id_turno'] ?>">
+                        <i class="fas fa-check"></i>
+                    </a>
+                <?php endif; ?>
+            </td>
         </tr>
         <?php endwhile; ?>
     </table>
@@ -183,7 +210,18 @@ td{
         <?php while($g=$grados->fetch_assoc()): ?>
         <tr>
             <td><?= $g['grado'] ?>°</td>
-            <td><?= $g['activo']?'<span class="activo">Activo</span>':'<span class="inactivo">Inactivo</span>' ?></td>
+            <td><?= $g['activo'] ? '<span class="activo">Activo</span>' : '<span class="inactivo">Inactivo</span>' ?></td>
+            <td>
+                <?php if($g['activo']): ?>
+                    <a class="icon-btn icon-danger" href="?desactivar_grado=<?= $g['id_grado'] ?>">
+                        <i class="fas fa-times"></i>
+                    </a>
+                <?php else: ?>
+                    <a class="icon-btn icon-success" href="?activar_grado=<?= $g['id_grado'] ?>">
+                        <i class="fas fa-check"></i>
+                    </a>
+                <?php endif; ?>
+            </td>
         </tr>
         <?php endwhile; ?>
     </table>
