@@ -13,28 +13,56 @@ $result_grados   = $conexion->query($query_grados);
 
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $id_carrera = $_POST['id_carrera'];
-    $id_grado   = $_POST['id_grado'];
-    $id_turno   = $_POST['id_turno'];
-    $clave      = $conexion->real_escape_string($_POST['clave']);
 
-    $query_check = "SELECT id_grupo FROM grupos WHERE clave = '$clave'";
-    $result_check = $conexion->query($query_check);
+    $id_carrera = (int)$_POST['id_carrera'];
+    $id_grado   = (int)$_POST['id_grado'];
+    $id_turno   = (int)$_POST['id_turno'];
 
-    if ($result_check->num_rows > 0) {
-        $mensaje = "Error: La clave de grupo ya existe";
-        $tipo_mensaje = "error";
+    // ===== Obtener datos base =====
+    $carrera = $conexion->query(
+        "SELECT abreviatura FROM carreras WHERE id_carrera = $id_carrera"
+    )->fetch_assoc();
+
+    $grado = $conexion->query(
+        "SELECT grado FROM grados WHERE id_grado = $id_grado"
+    )->fetch_assoc();
+
+    $turno = $conexion->query(
+        "SELECT abreviatura FROM turnos WHERE id_turno = $id_turno"
+    )->fetch_assoc();
+
+    // ===== Contar grupos existentes =====
+    $query_count = "
+        SELECT COUNT(*) total
+        FROM grupos
+        WHERE id_carrera = $id_carrera
+          AND id_grado   = $id_grado
+          AND id_turno   = $id_turno
+    ";
+
+    $total = $conexion->query($query_count)->fetch_assoc()['total'];
+    $consecutivo = str_pad($total + 1, 2, '0', STR_PAD_LEFT);
+
+    // ===== Construir clave =====
+    $clave = $carrera['abreviatura']
+           . " "
+           . $grado['grado']
+           . $consecutivo
+           . " - "
+           . $turno['abreviatura'];
+
+    // ===== Insertar grupo =====
+    $query_insert = "
+        INSERT INTO grupos (clave, id_carrera, id_grado, id_turno)
+        VALUES ('$clave', $id_carrera, $id_grado, $id_turno)
+    ";
+
+    if ($conexion->query($query_insert)) {
+        $mensaje = "Grupo registrado correctamente: $clave";
+        $tipo_mensaje = "success";
     } else {
-        $query = "INSERT INTO grupos (clave, id_carrera, id_grado, id_turno) 
-                  VALUES ('$clave', $id_carrera, $id_grado, $id_turno)";
-
-        if ($conexion->query($query)) {
-            $mensaje = "Grupo registrado exitosamente";
-            $tipo_mensaje = "success";
-        } else {
-            $mensaje = "Error al registrar grupo: " . $conexion->error;
-            $tipo_mensaje = "error";
-        }
+        $mensaje = "Error al registrar grupo";
+        $tipo_mensaje = "error";
     }
 }
 ?>
@@ -236,7 +264,11 @@ button {
 
             <div>
                 <label>Clave del Grupo</label>
-                <input type="text" name="clave" required>
+                <input
+                    type="text"
+                    value="<?= isset($clave) ? htmlspecialchars($clave) : 'Se generará automáticamente' ?>"
+                    disabled
+                >
             </div>
         </div>
 
