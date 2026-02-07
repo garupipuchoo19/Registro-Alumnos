@@ -5,7 +5,12 @@ require_once 'conexion.php';
 /* ===== CARRERAS ===== */
 if (isset($_POST['agregar_carrera'])) {
     $nombre = $conexion->real_escape_string($_POST['nombre_carrera']);
-    $conexion->query("INSERT INTO carreras (nombre) VALUES ('$nombre')");
+    $abreviatura = $conexion->real_escape_string($_POST['abreviatura_carrera']);
+
+    $conexion->query(
+        "INSERT INTO carreras (nombre, abreviatura) 
+         VALUES ('$nombre', '$abreviatura')"
+    );
 }
 if (isset($_GET['eliminar_carrera'])) {
     $conexion->query("UPDATE carreras SET activa=0 WHERE id_carrera=".$_GET['eliminar_carrera']);
@@ -158,23 +163,38 @@ td{
             <label>Nueva carrera</label>
             <input type="text" name="nombre_carrera" required>
         </div>
-        <button class="btn"><i class="fas fa-plus"></i> Agregar</button>
+        <div class="form-group">
+            <label>Abreviatura</label>
+            <input type="text" name="abreviatura_carrera" maxlength="10" required>
+        </div>
+        <button class="btn" name="agregar_carrera">
+            <i class="fas fa-plus"></i> Agregar
+        </button>
     </form>
 
     <table>
         <?php while($c=$carreras->fetch_assoc()): ?>
-        <tr>
-            <td><?= $c['nombre'] ?></td>
-            <td><?= $c['activa']?'<span class="activo">Activa</span>':'<span class="inactivo">Inactiva</span>' ?></td>
-            <td>
-                <?php if($c['activa']): ?>
-                    <a class="icon-btn icon-danger" href="?eliminar_carrera=<?= $c['id_carrera'] ?>"><i class="fas fa-times"></i></a>
-                <?php else: ?>
-                    <a class="icon-btn icon-success" href="?activar_carrera=<?= $c['id_carrera'] ?>"><i class="fas fa-check"></i></a>
-                <?php endif; ?>
-            </td>
-        </tr>
-        <?php endwhile; ?>
+    <tr>
+        <td><?= $c['nombre'] ?></td>
+        <td><strong><?= $c['abreviatura'] ?></strong></td>
+        <td>
+            <?= $c['activa']
+                ? '<span class="activo">Activa</span>'
+                : '<span class="inactivo">Inactiva</span>' ?>
+        </td>
+        <td>
+            <?php if($c['activa']): ?>
+                <a class="icon-btn icon-danger" href="?eliminar_carrera=<?= $c['id_carrera'] ?>">
+                    <i class="fas fa-times"></i>
+                </a>
+            <?php else: ?>
+                <a class="icon-btn icon-success" href="?activar_carrera=<?= $c['id_carrera'] ?>">
+                    <i class="fas fa-check"></i>
+                </a>
+            <?php endif; ?>
+        </td>
+    </tr>
+    <?php endwhile; ?>
     </table>
 </div>
 
