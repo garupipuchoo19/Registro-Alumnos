@@ -20,7 +20,7 @@ $query = "SELECT a.*, g.clave AS grupo_clave,
           CONCAT(a.nombre,' ',a.apellido_paterno,' ',IFNULL(a.apellido_materno,'')) AS nombre_completo
           FROM alumnos a
           JOIN grupos g ON a.id_grupo = g.id_grupo
-          ORDER BY a.id_alumno DESC";
+          ORDER BY a.id_alumno ASC";
 $result = $conexion->query($query);
 ?>
 <!DOCTYPE html>
